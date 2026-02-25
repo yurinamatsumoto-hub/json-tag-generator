@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>completion タグ ジェネレーター</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -17,6 +18,32 @@
       font-size: 1.3rem;
       margin-bottom: 24px;
       color: #111;
+    }
+
+    /* ログイン画面 */
+    #login-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 20px;
+      text-align: center;
+    }
+    #login-section p {
+      color: #555;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+    #error-msg {
+      color: #cc0000;
+      font-size: 0.88rem;
+      display: none;
+    }
+
+    /* ツール画面 */
+    #tool-section {
+      display: none;
     }
     .field {
       margin-bottom: 16px;
@@ -89,35 +116,69 @@
   </style>
 </head>
 <body>
-  <h1>completion タグ ジェネレーター</h1>
 
-  <div class="field">
-    <label for="correctnessNum">correctnessNum（ミッションをクリアするのに必要な正解数を入力）</label>
-    <input type="number" id="correctnessNum" value="2" min="0">
+  <!-- ログイン画面 -->
+  <div id="login-section">
+    <h1>completion タグ ジェネレーター</h1>
+    <p>@smartnews.com アカウントでログインしてください</p>
+    <div id="g_id_onload"
+      data-client_id="760825137208-gt8p91r6i80k7ep26f5qsvlu4e622qr8.apps.googleusercontent.com"
+      data-callback="handleCredentialResponse"
+      data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-text="signin_with"
+      data-locale="ja">
+    </div>
+    <p id="error-msg">@smartnews.com のアカウントでログインしてください</p>
   </div>
 
-  <div class="field">
-    <label for="missionId">missionId（クイズのミッションIDを記入）</label>
-    <input type="text" id="missionId" placeholder="例: 808921308625879719">
-  </div>
+  <!-- ツール画面 -->
+  <div id="tool-section">
+    <h1>completion タグ ジェネレーター</h1>
 
-  <div class="field">
-    <label for="ctaUrl">ctaUrl（MissionのDeeplinkを入力）</label>
-    <p class="hint">
-      ＜Deeplink発行方法＞<br>
-      1. Mission Admin にログイン<br>
-      2. キャンペーンの [META] タブの最下部にある [Deeplink] → [GENERATE DEEPLINK] を押下<br>
-      3. [Referrer] に「quiz」と入力すると、DeepLink が発行される
-    </p>
-    <input type="text" id="ctaUrl" placeholder="例: smartnews://openBridgeLink?url=...">
-  </div>
+    <div class="field">
+      <label for="correctnessNum">correctnessNum（ミッションをクリアするのに必要な正解数を入力）</label>
+      <input type="number" id="correctnessNum" value="2" min="0">
+    </div>
 
-  <div class="output-wrapper">
-    <textarea id="output" readonly></textarea>
-    <button class="copy-btn" id="copyBtn" onclick="copyOutput()">コピー</button>
+    <div class="field">
+      <label for="missionId">missionId（クイズのミッションIDを記入）</label>
+      <input type="text" id="missionId" placeholder="例: 808921308625879719">
+    </div>
+
+    <div class="field">
+      <label for="ctaUrl">ctaUrl（MissionのDeeplinkを入力）</label>
+      <p class="hint">
+        ＜Deeplink発行方法＞<br>
+        1. Mission Admin にログイン<br>
+        2. キャンペーンの [META] タブの最下部にある [Deeplink] → [GENERATE DEEPLINK] を押下<br>
+        3. [Referrer] に「quiz」と入力すると、DeepLink が発行される
+      </p>
+      <input type="text" id="ctaUrl" placeholder="例: smartnews://openBridgeLink?url=...">
+    </div>
+
+    <div class="output-wrapper">
+      <textarea id="output" readonly></textarea>
+      <button class="copy-btn" id="copyBtn" onclick="copyOutput()">コピー</button>
+    </div>
   </div>
 
   <script>
+    function handleCredentialResponse(response) {
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      const email = payload.email;
+
+      if (email.endsWith('@smartnews.com')) {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('tool-section').style.display = 'block';
+        generate();
+      } else {
+        document.getElementById('error-msg').style.display = 'block';
+      }
+    }
+
     function generate() {
       const correctnessNum = parseInt(document.getElementById('correctnessNum').value) || 0;
       const missionId = document.getElementById('missionId').value;
@@ -150,12 +211,9 @@
       });
     }
 
-    // 入力変更時にリアルタイム更新
     document.querySelectorAll('input').forEach(el => {
       el.addEventListener('input', generate);
     });
-
-    generate();
   </script>
 </body>
 </html>

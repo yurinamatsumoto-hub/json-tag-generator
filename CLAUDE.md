@@ -7,30 +7,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 SmartNews クイズ/キャンペーン向けの `completion` JSONタグを生成するブラウザツール。
 `correctnessNum`・`missionId`・`ctaUrl` を入力すると、コピペ用のJSONスニペットをリアルタイム生成する。
 
+Vercel でホスティングし、GitHub (`yurinamatsumoto-hub/json-tag-generator`) へ push すると自動デプロイされる。
+
 ## ファイル構成
 
 - `index.html` — ツール本体（ビルド不要の単一ファイル。フレームワーク・依存パッケージなし）
 
 ## 開発・確認方法
 
-ビルド不要。ブラウザで直接開くか、ローカルサーバー経由で確認する。
+ビルド不要。ブラウザで直接開くか、簡易サーバーで確認する。
 
 ```bash
-# macOS 内蔵 Apache で配信（社内ネットワーク共有時）
-sudo cp index.html /Library/WebServer/Documents/json-tag-generator/index.html
-sudo apachectl start
-# → http://localhost/json-tag-generator/ でアクセス
-
-# 簡易サーバー（手元確認用）
+# 手元確認
 python3 -m http.server 8080
 # → http://localhost:8080/
+
+# 本番反映（push すると Vercel が自動デプロイ）
+git add .
+git commit -m "変更内容"
+git push
 ```
 
 ## 出力するJSONの構造
 
 ```json
 ,"completion": {
-    "correctnessNum": <入力値（整数）>,
+    "correctnessNum": <整数>,
     "reward": {
       "type": "mission",
       "missionId": "<入力値>",
@@ -41,4 +43,13 @@ python3 -m http.server 8080
   }}
 ```
 
-固定フィールド（`type`・`openAction`・`ctaText`）を変更する場合は `index.html` 内の `generate()` 関数のテンプレートリテラルを編集する。
+- **可変フィールド**：`correctnessNum`（整数）・`missionId`・`ctaUrl`
+- **固定フィールド**：`type`・`openAction`・`ctaText` — 変更する場合は `index.html` の `generate()` 関数内のテンプレートリテラルを編集する
+
+## 各フィールドの説明
+
+| フィールド | 説明 |
+|-----------|------|
+| `correctnessNum` | ミッションをクリアするのに必要な正解数 |
+| `missionId` | クイズのミッションID |
+| `ctaUrl` | Mission の Deeplink（Mission Admin の [META] タブ → [Deeplink] → [GENERATE DEEPLINK] で発行。Referrer に `quiz` を入力） |
